@@ -1,4 +1,4 @@
-type InstagramAccount = { id: string; username: string };
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type InstagramMedia = {
   id: string;
@@ -13,9 +13,7 @@ export type InstagramMedia = {
 type InstagramResponse<T> = T & { error?: { message?: string } };
 const fields = "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp";
 
-async function requestInstagram<T>(path: string) {
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN?.trim();
-  if (!token) return null;
+async function requestInstagram<T>(path: string, token: string) {
   const url = new URL(`https://graph.instagram.com/${path}`);
   url.searchParams.set("access_token", token);
   try {
@@ -26,19 +24,16 @@ async function requestInstagram<T>(path: string) {
   } catch { return null; }
 }
 
-function instagramHandle(url: string) {
-  try {
-    const parsed = new URL(url);
-    if (!/(^|\.)instagram\.com$/i.test(parsed.hostname)) return null;
-    return parsed.pathname.split("/").filter(Boolean)[0]?.toLowerCase() ?? null;
-  } catch { return null; }
-}
-
-export async function getInstagramFeedForProfile(instagramUrl?: string) {
-  const expectedHandle = instagramUrl ? instagramHandle(instagramUrl) : null;
-  if (!expectedHandle) return null;
-  const account = await requestInstagram<InstagramAccount>("me?fields=id,username");
-  if (!account || account.username.toLowerCase() !== expectedHandle) return null;
-  const result = await requestInstagram<{ data?: InstagramMedia[] }>(`me/media?fields=${fields}&limit=6`);
+export async function getInstagramFeedForProfile(profileId?: string) {
+  if (!profileId) return null;
+  const admin = createAdminClient();
+  if (!admin) return null;
+  const { data: connection } = await admin
+    .from("instagram_connections")
+    .select("access_token")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (!connection?.access_token) return null;
+  const result = await requestInstagram<{ data?: InstagramMedia[] }>(`me/media?fields=${fields}&limit=6`, connection.access_token);
   return result?.data ?? null;
 }

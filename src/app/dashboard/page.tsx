@@ -15,15 +15,13 @@ export default async function DashboardPage() {
   ]);
   const profiles = (profileRows ?? []) as Profile[];
   const ids = profiles.map((profile) => profile.id);
-  const [linksResponse, postsResponse, ownInstagramResponse] = await Promise.all([
+  const [linksResponse, postsResponse] = await Promise.all([
     ids.length ? supabase.from("profile_links").select("*").in("profile_id", ids).eq("is_visible", true).order("position") : Promise.resolve({ data: [] }),
-    ids.length ? supabase.from("profile_posts").select("*").in("profile_id", ids).order("published_at", { ascending: false }) : Promise.resolve({ data: [] }),
-    ownProfile ? supabase.from("profile_links").select("url").eq("profile_id", ownProfile.id).eq("platform", "instagram").eq("is_visible", true).maybeSingle() : Promise.resolve({ data: null })
+    ids.length ? supabase.from("profile_posts").select("*").in("profile_id", ids).order("published_at", { ascending: false }) : Promise.resolve({ data: [] })
   ]);
   const links = (linksResponse.data ?? []) as ProfileLink[];
   const posts = (postsResponse.data ?? []) as ProfilePost[];
-  const ownInstagramUrl = ownInstagramResponse.data?.url;
-  const instagramPosts = (await getInstagramFeedForProfile(ownInstagramUrl))?.slice(0, 3) ?? [];
+  const instagramPosts = (await getInstagramFeedForProfile(ownProfile?.id))?.slice(0, 3) ?? [];
   const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
   const recommendations = posts.slice(0, 9);
 
@@ -33,6 +31,8 @@ export default async function DashboardPage() {
       <h1 className="mt-2 text-3xl font-black">새로운 크리에이터를 만나보세요</h1>
       <p className="mt-3 text-slate-400">공개된 SNS 활동을 바탕으로 최신 게시물을 추천합니다.</p>
     </section>
+
+    {ownProfile && <div><Link href="/auth/instagram/start" className="inline-flex rounded-lg border border-cyan-300/50 px-4 py-2 text-sm font-bold text-cyan-200 hover:bg-cyan-300/10">Instagram 피드 연결</Link></div>}
 
     <section>
       <div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-bold">추천 게시물</h2><span className="text-sm text-slate-500">최신순</span></div>

@@ -1,7 +1,7 @@
 import { getInstagramFeedForProfile } from "@/lib/instagram";
 
-export async function InstagramFeed({ instagramUrl }: { instagramUrl?: string }) {
-  const media = await getInstagramFeedForProfile(instagramUrl);
+export async function InstagramFeed({ profileId, instagramUrl }: { profileId: string; instagramUrl?: string }) {
+  const media = await getInstagramFeedForProfile(profileId);
   if (!media?.length) return null;
   return <section className="mt-10 w-full text-left">
     <div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-bold">Instagram</h2><a href={instagramUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-cyan-300 hover:text-cyan-200">Instagram에서 보기</a></div>
