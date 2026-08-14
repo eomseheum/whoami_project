@@ -6,7 +6,7 @@ import { getInstagramFeedForProfile } from "@/lib/instagram";
 import { getYouTubeFeed } from "@/lib/youtube";
 import type { Profile, ProfileLink, ProfilePost } from "@/types/database";
 
-const names: Record<string, string> = { instagram: "Instagram", x: "X", youtube: "YouTube" };
+const names: Record<string, string> = { instagram: "Instagram", x: "X", youtube: "YouTube", blog: "블로그" };
 
 export default async function DashboardPage() {
   const supabase = await createClient();

@@ -26,7 +26,7 @@ export type ProfileLink = {
 export type ProfilePost = {
   id: string;
   profile_id: string;
-  platform: "youtube" | "instagram" | "x";
+  platform: "youtube" | "instagram" | "x" | "blog";
   title: string;
   url: string;
   published_at: string;

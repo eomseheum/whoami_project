@@ -8,7 +8,8 @@ import type { ProfileLink, ProfilePost } from "@/types/database";
 const platforms = [
   ["instagram", "Instagram", "@yourname 또는 URL"],
   ["x", "X", "@yourname 또는 URL"],
-  ["youtube", "YouTube", "@yourchannel 또는 URL"]
+  ["youtube", "YouTube", "@yourchannel 또는 URL"],
+  ["blog", "블로그", "https://myblog.example.com"]
 ] as const;
 type Platform = (typeof platforms)[number][0];
 
@@ -19,7 +20,8 @@ function toProfileUrl(platform: Platform, value: string) {
   if (!handle) return "";
   if (platform === "instagram") return `https://www.instagram.com/${handle}`;
   if (platform === "x") return `https://x.com/${handle}`;
-  return `https://www.youtube.com/@${handle}`;
+  if (platform === "youtube") return `https://www.youtube.com/@${handle}`;
+  return `https://${handle}`;
 }
 
 export function SocialManager({ profileId, initialLinks, initialPosts }: { profileId: string; initialLinks: ProfileLink[]; initialPosts: ProfilePost[] }) {

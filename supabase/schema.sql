@@ -47,7 +47,7 @@ create table public.link_clicks (
 create table public.profile_posts (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete cascade,
-  platform text not null check (platform in ('youtube', 'instagram', 'x')),
+  platform text not null check (platform in ('youtube', 'instagram', 'x', 'blog')),
   title text not null check (char_length(title) <= 120),
   url text not null check (url ~ '^https://'),
   published_at timestamptz not null default now(),
