@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 type TokenResponse = { access_token?: string; user_id?: string; error_type?: string; error_message?: string };
 type LongLivedTokenResponse = { access_token?: string; expires_in?: number };
-type InstagramAccount = { id?: string; username?: string };
+type InstagramAccount = { id?: string; username?: string; account_type?: string };
 
 function siteUrl(request: NextRequest) {
   return (process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin).replace(/\/$/, "");
@@ -41,11 +41,12 @@ export async function GET(request: NextRequest) {
   const longLived = await exchangeResponse.json() as LongLivedTokenResponse;
   const accessToken = longLived.access_token || shortLived.access_token;
   const accountUrl = new URL("https://graph.instagram.com/me");
-  accountUrl.searchParams.set("fields", "id,username");
+  accountUrl.searchParams.set("fields", "id,username,account_type");
   accountUrl.searchParams.set("access_token", accessToken);
   const accountResponse = await fetch(accountUrl, { cache: "no-store" });
   const account = await accountResponse.json() as InstagramAccount;
   if (!accountResponse.ok || !account.id || !account.username) return dashboardRedirect(request, "account_failed");
+  if (!account.account_type || !["BUSINESS", "CREATOR"].includes(account.account_type.toUpperCase())) return dashboardRedirect(request, "professional_account_required");
 
   const { data: profile } = await admin.from("profiles").select("id").eq("user_id", user.id).maybeSingle();
   if (!profile) return dashboardRedirect(request, "profile_missing");
