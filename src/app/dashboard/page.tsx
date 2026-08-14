@@ -3,6 +3,7 @@ import { CreatorRecommendationCard, type RecommendationItem } from "@/components
 import { createClient } from "@/lib/supabase/server";
 import { getInstagramFeedForProfile } from "@/lib/instagram";
 import { getYouTubeFeed } from "@/lib/youtube";
+import { getBlogFeed } from "@/lib/blog";
 import type { Profile, ProfileLink, ProfilePost } from "@/types/database";
 
 const names: Record<string, string> = { instagram: "Instagram", x: "X", youtube: "YouTube", blog: "블로그" };
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
   const instagramPosts = (await getInstagramFeedForProfile(ownProfile?.id))?.slice(0, 3) ?? [];
   const ownYouTubeUrl = links.find((link) => link.profile_id === ownProfile?.id && link.platform === "youtube")?.url;
   const youtubeVideos = (await getYouTubeFeed(ownYouTubeUrl)) ?? [];
+  const blogPosts = (await getBlogFeed(ownProfile?.id)) ?? [];
   const creators = new Map<string, Profile>(profiles.map((profile) => [profile.id, profile]));
   if (ownProfile) creators.set(ownProfile.id, { ...ownProfile, user_id: user?.id ?? "", bio: null, theme: "", is_public: true, is_demo: false, created_at: "", updated_at: "" });
   const itemsByProfile = new Map<string, RecommendationItem[]>();
@@ -37,6 +39,7 @@ export default async function DashboardPage() {
       if (imageUrl) addItem(ownProfile.id, { id: `instagram-${post.id}`, platform: "instagram", title: post.caption?.split("\n")[0]?.trim() || "Instagram 게시물", url: post.permalink, imageUrl, isVideo: post.media_type === "VIDEO" });
     });
     youtubeVideos.forEach((video) => addItem(ownProfile.id, { id: `youtube-${video.id}`, platform: "youtube", title: video.title, url: video.url, imageUrl: video.thumbnailUrl, isVideo: true }));
+    blogPosts.forEach((post) => addItem(ownProfile.id, { id: `blog-${post.id}`, platform: "blog", title: post.title, url: post.url }));
   }
   const recommendationGroups = [...itemsByProfile.entries()].map(([profileId, items]) => ({ profile: creators.get(profileId), items, links: links.filter((link) => link.profile_id === profileId) })).filter((group) => group.profile && group.items.length);
 

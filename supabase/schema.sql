@@ -54,6 +54,12 @@ create table public.profile_posts (
   created_at timestamptz not null default now()
 );
 
+create table public.blog_feeds (
+  profile_id uuid primary key references public.profiles(id) on delete cascade,
+  feed_url text not null check (feed_url ~ '^https://'),
+  updated_at timestamptz not null default now()
+);
+
 create index profile_links_profile_position_idx on public.profile_links(profile_id, position);
 create index profile_views_profile_viewed_idx on public.profile_views(profile_id, viewed_at desc);
 create index link_clicks_profile_clicked_idx on public.link_clicks(profile_id, clicked_at desc);
@@ -64,6 +70,7 @@ alter table public.profile_links enable row level security;
 alter table public.profile_views enable row level security;
 alter table public.link_clicks enable row level security;
 alter table public.profile_posts enable row level security;
+alter table public.blog_feeds enable row level security;
 
 create policy "public profiles are readable" on public.profiles for select using (is_public = true or auth.uid() = user_id);
 create policy "users manage own profile" on public.profiles for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -73,3 +80,5 @@ create policy "owners read views" on public.profile_views for select using (exis
 create policy "owners read clicks" on public.link_clicks for select using (exists (select 1 from public.profiles p where p.id = profile_id and p.user_id = auth.uid()));
 create policy "public posts are readable" on public.profile_posts for select using (exists (select 1 from public.profiles p where p.id = profile_id and (p.is_public = true or p.user_id = auth.uid())));
 create policy "users manage own posts" on public.profile_posts for all using (exists (select 1 from public.profiles p where p.id = profile_id and p.user_id = auth.uid())) with check (exists (select 1 from public.profiles p where p.id = profile_id and p.user_id = auth.uid()));
+create policy "public blog feeds are readable" on public.blog_feeds for select using (exists (select 1 from public.profiles p where p.id = profile_id and (p.is_public = true or p.user_id = auth.uid())));
+create policy "users manage own blog feeds" on public.blog_feeds for all using (exists (select 1 from public.profiles p where p.id = profile_id and p.user_id = auth.uid())) with check (exists (select 1 from public.profiles p where p.id = profile_id and p.user_id = auth.uid()));
