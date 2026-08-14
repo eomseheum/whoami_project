@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { InstagramRecommendationCard } from "@/components/instagram-recommendation-card";
+import { YouTubeRecommendationCard } from "@/components/youtube-recommendation-card";
 import { createClient } from "@/lib/supabase/server";
 import { getInstagramFeedForProfile } from "@/lib/instagram";
+import { getYouTubeFeed } from "@/lib/youtube";
 import type { Profile, ProfileLink, ProfilePost } from "@/types/database";
 
 const names: Record<string, string> = { instagram: "Instagram", x: "X", youtube: "YouTube" };
@@ -22,6 +24,8 @@ export default async function DashboardPage() {
   const links = (linksResponse.data ?? []) as ProfileLink[];
   const posts = (postsResponse.data ?? []) as ProfilePost[];
   const instagramPosts = (await getInstagramFeedForProfile(ownProfile?.id))?.slice(0, 3) ?? [];
+  const ownYouTubeUrl = links.find((link) => link.profile_id === ownProfile?.id && link.platform === "youtube" && link.is_visible)?.url;
+  const youtubeVideos = (await getYouTubeFeed(ownYouTubeUrl)) ?? [];
   const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
   const recommendations = posts.slice(0, 9);
 
@@ -36,8 +40,9 @@ export default async function DashboardPage() {
 
     <section>
       <div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-bold">추천 게시물</h2><span className="text-sm text-slate-500">최신순</span></div>
-      {instagramPosts.length || recommendations.length ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {instagramPosts.length || youtubeVideos.length || recommendations.length ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {instagramPosts.length > 0 && ownProfile && <InstagramRecommendationCard posts={instagramPosts} username={ownProfile.username} displayName={ownProfile.display_name} avatarUrl={ownProfile.avatar_url} />}
+        {youtubeVideos.length > 0 && ownProfile && <YouTubeRecommendationCard videos={youtubeVideos} username={ownProfile.username} displayName={ownProfile.display_name} avatarUrl={ownProfile.avatar_url} />}
         {recommendations.map((post) => {
           const owner = profileById.get(post.profile_id);
           if (!owner) return null;
